@@ -11,7 +11,7 @@ from PIL import Image
 import streamlit as st
 import streamlit.components.v1 as components
 
-# --- 1. CẤU HÌNH TRANG STREAMLIT (BACKEND MODE) ---
+# --- 1. CẤU HÌNH STREAMLIT ---
 st.set_page_config(
     page_title="Tử Vi Đẩu Số Engine",
     page_icon="☯️",
@@ -19,30 +19,28 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# Ẩn hoàn toàn giao diện mặc định của Streamlit
+# Ẩn giao diện mặc định
 st.markdown(
     """
     <style>
     header, footer, #MainMenu, [data-testid="stSidebar"] { display: none !important; }
     .block-container { padding: 0rem !important; margin: 0rem !important; max-width: 100% !important; }
-    iframe { display: block; width: 100vw !important; height: 100vh !important; border: none; }
+    iframe { display: block; width: 100vw !important; border: none; }
     </style>
 """,
     unsafe_allow_html=True,
 )
 
-# --- 2. CẤU HÌNH HỆ THỐNG & ĐƯỜNG DẪN ---
+# --- 2. CẤU HÌNH ĐƯỜNG DẪN & SYSTEM PROMPT ---
 API_KEY = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY", ""))
 BASE_DIR = Path(__file__).parent
-
-# Đường dẫn đến tệp system instruction theo đúng cấu trúc trong ảnh: system_prompts/system_instruction.txt
 SYSTEM_PROMPT_FILE = BASE_DIR / "system_prompts" / "system_instruction.txt"
 ENGINE_FILE = BASE_DIR / "tu_vi_engine.json"
 CACHE_FILE = BASE_DIR / "books_cache.json"
 INDEX_FILE = BASE_DIR / "index.html"
 GEMINI_MODEL = "gemini-2.5-flash"
 
-# Session State quản lý dữ liệu ứng dụng
+# Session State
 if "analysis_result" not in st.session_state:
     st.session_state.analysis_result = (
         "<p style='color: #a0aec0;'>Chưa có kết quả luận giải. Vui lòng tải lá số lên để phân tích.</p>"
@@ -51,7 +49,6 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
 
-# --- 3. ĐỌC SYSTEM PROMPT / NGUYÊN TẮC LUẬN GIẢI ---
 def load_system_instruction():
     """Đọc system prompt từ system_prompts/system_instruction.txt"""
     if SYSTEM_PROMPT_FILE.exists():
@@ -60,17 +57,11 @@ def load_system_instruction():
     elif ENGINE_FILE.exists():
         with open(ENGINE_FILE, "r", encoding="utf-8") as f:
             return f.read().strip()[:30000]
-    else:
-        return (
-            "Bạn là bậc thầy Tử Vi Đẩu Số. Hãy luận giải chi tiết, đầy đủ "
-            "về Bản Mệnh, Cách Cục, 12 Cung và Vận Hạn dựa trên ảnh lá số được cung cấp."
-        )
+    return "Bạn là chuyên gia Tử Vi Đẩu Số. Hãy luận giải đầy đủ theo lá số được cung cấp."
 
-
-# --- 4. BACKEND LOGIC & DỊCH VỤ DỮ LIỆU ---
 
 def load_cached_books_safe():
-    """Đọc dữ liệu kho sách từ tệp cache JSON"""
+    """Đọc dữ liệu kho sách"""
     if not CACHE_FILE.exists():
         return [], "0 KB"
     try:
@@ -91,14 +82,12 @@ def load_cached_books_safe():
         return [], "0 KB"
 
 
-def process_gemini_analysis(uploaded_file, year, note):
-    """Xử lý gọi Gemini API luận giải lá số đầy đủ theo system instruction"""
+def process_gemini_analysis(image, year, note):
+    """Gọi Gemini API phân tích lá số"""
     if not API_KEY:
         return "<p style='color: #fc8181;'>❌ Lỗi: Chưa cấu hình GEMINI_API_KEY trong Secrets!</p>"
     try:
-        image = Image.open(uploaded_file).convert("RGB")
         system_instruction = load_system_instruction()
-
         prompt_text = (
             f"YÊU CẦU LUẬN GIẢI LÁ SỐ TỬ VI:\n"
             f"- Năm Tiểu Hạn cần xem: {year}\n"
@@ -109,10 +98,7 @@ def process_gemini_analysis(uploaded_file, year, note):
         client = genai.Client(api_key=API_KEY)
         response = client.models.generate_content(
             model=GEMINI_MODEL,
-            contents=[
-                image,
-                prompt_text,
-            ],
+            contents=[image, prompt_text],
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
                 temperature=0.3,
@@ -123,31 +109,58 @@ def process_gemini_analysis(uploaded_file, year, note):
         return f"<p style='color: #fc8181;'>❌ Lỗi xử lý API: {str(e)}</p>"
 
 
-# --- 5. RENDER VÀ TRUYỀN DỮ LIỆU VÀO INDEX.HTML ---
-
-if INDEX_FILE.exists():
-    titles, total_size = load_cached_books_safe()
-
-    with open(INDEX_FILE, "r", encoding="utf-8") as f:
-        html_content = f.read()
-
-    safe_analysis = str(st.session_state.analysis_result)
-    safe_chat_history = json.dumps(st.session_state.chat_history, ensure_ascii=False)
-
-    final_html = (
-        html_content.replace(
-            "/* BOOK_TITLES_DATA */", json.dumps(titles, ensure_ascii=False)
+def process_gemini_chat(message):
+    """Xử lý trò chuyện cùng AI"""
+    if not API_KEY:
+        return "Chưa cấu hình GEMINI_API_KEY!"
+    try:
+        client = genai.Client(api_key=API_KEY)
+        chat_prompt = f"BÀI LUẬN GỐC:\n{st.session_state.analysis_result}\n\nCÂU HỎI MỚI: {message}"
+        response = client.models.generate_content(
+            model=GEMINI_MODEL, contents=[chat_prompt]
         )
-        .replace(
-            "/* BOOK_SIZE_DATA */", json.dumps(total_size, ensure_ascii=False)
-        )
-        .replace(
-            "/* CHAT_HISTORY_DATA */", safe_chat_history
-        )
-        .replace("<!-- ANALYSIS_RESULT -->", safe_analysis)
-    )
+        return response.text if response and response.text else "AI không có phản hồi."
+    except Exception as e:
+        return f"Lỗi: {str(e)}"
 
-    components.html(final_html, height=1000, scrolling=True)
 
-else:
-    st.error("❌ Không tìm thấy file index.html trong cùng thư mục!")
+# --- 3. CUSTOM COMPONENT SETUP ---
+tu_vi_component = components.declare_component("tu_vi_component", path=str(INDEX_FILE))
+
+# Lấy thông tin kho sách
+titles, total_size = load_cached_books_safe()
+
+# Trình truyền dữ liệu từ Python xuống JS Component
+component_value = tu_vi_component(
+    key="tu_vi_engine_ui",
+    analysis_result=st.session_state.analysis_result,
+    books_titles=titles,
+    books_size=total_size,
+    chat_history=st.session_state.chat_history,
+)
+
+# --- 4. HỨNG VÀ XỬ LÝ DỮ LIỆU TỪ HTML TRUYỀN LÊN ---
+if component_value and isinstance(component_value, dict):
+    action = component_value.get("action")
+
+    if action == "ANALYZE":
+        base64_str = component_value.get("image_base64", "")
+        year = component_value.get("year", 2026)
+        note = component_value.get("note", "")
+
+        if "," in base64_str:
+            base64_data = base64_str.split(",")[1]
+            image_bytes = base64.b64decode(base64_data)
+            image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+
+            # Xử lý luận giải với Gemini API
+            res = process_gemini_analysis(image, year, note)
+            st.session_state.analysis_result = res
+            st.rerun()
+
+    elif action == "CHAT":
+        user_msg = component_value.get("message", "")
+        if user_msg:
+            ai_reply = process_gemini_chat(user_msg)
+            st.session_state.chat_history.append((user_msg, ai_reply))
+            st.rerun()
