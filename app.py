@@ -19,7 +19,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# Ẩn giao diện mặc định
 st.markdown(
     """
     <style>
@@ -37,6 +36,7 @@ BASE_DIR = Path(__file__).parent
 SYSTEM_PROMPT_FILE = BASE_DIR / "system_prompts" / "system_instruction.txt"
 ENGINE_FILE = BASE_DIR / "tu_vi_engine.json"
 CACHE_FILE = BASE_DIR / "books_cache.json"
+INDEX_FILE = BASE_DIR / "index.html"
 GEMINI_MODEL = "gemini-2.5-flash"
 
 # Session State
@@ -49,7 +49,6 @@ if "chat_history" not in st.session_state:
 
 
 def load_system_instruction():
-    """Đọc system prompt từ system_prompts/system_instruction.txt"""
     if SYSTEM_PROMPT_FILE.exists():
         with open(SYSTEM_PROMPT_FILE, "r", encoding="utf-8") as f:
             return f.read().strip()
@@ -60,7 +59,6 @@ def load_system_instruction():
 
 
 def load_cached_books_safe():
-    """Đọc dữ liệu kho sách"""
     if not CACHE_FILE.exists():
         return [], "0 KB"
     try:
@@ -82,7 +80,6 @@ def load_cached_books_safe():
 
 
 def process_gemini_analysis(image, year, note):
-    """Gọi Gemini API phân tích lá số"""
     if not API_KEY:
         return "<p style='color: #fc8181;'>❌ Lỗi: Chưa cấu hình GEMINI_API_KEY trong Secrets!</p>"
     try:
@@ -109,7 +106,6 @@ def process_gemini_analysis(image, year, note):
 
 
 def process_gemini_chat(message):
-    """Xử lý trò chuyện cùng AI"""
     if not API_KEY:
         return "Chưa cấu hình GEMINI_API_KEY!"
     try:
@@ -123,44 +119,14 @@ def process_gemini_chat(message):
         return f"Lỗi: {str(e)}"
 
 
-# --- 3. CUSTOM COMPONENT SETUP ---
-# SỬA LỖI TẠI ĐÂY: Tham số 'path' phải trỏ đến thư mục chứa index.html (BASE_DIR)
-tu_vi_component = components.declare_component("tu_vi_component", path=str(BASE_DIR))
-
-# Lấy thông tin kho sách
+# --- 3. RENDER COMPONENT TRỰC TIẾP TỪ FILE INDEX.HTML ---
 titles, total_size = load_cached_books_safe()
 
-# Trình truyền dữ liệu từ Python xuống JS Component
-component_value = tu_vi_component(
-    key="tu_vi_engine_ui",
-    analysis_result=st.session_state.analysis_result,
-    books_titles=titles,
-    books_size=total_size,
-    chat_history=st.session_state.chat_history,
-)
+# Đọc file HTML trực tiếp để render, loại bỏ hoàn toàn lỗi host assets
+if INDEX_FILE.exists():
+    with open(INDEX_FILE, "r", encoding="utf-8") as f:
+        html_code = f.read()
 
-# --- 4. HỨNG VÀ XỬ LÝ DỮ LIỆU TỪ HTML TRUYỀN LÊN ---
-if component_value and isinstance(component_value, dict):
-    action = component_value.get("action")
-
-    if action == "ANALYZE":
-        base64_str = component_value.get("image_base64", "")
-        year = component_value.get("year", 2026)
-        note = component_value.get("note", "")
-
-        if "," in base64_str:
-            base64_data = base64_str.split(",")[1]
-            image_bytes = base64.b64decode(base64_data)
-            image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-
-            # Xử lý luận giải với Gemini API
-            res = process_gemini_analysis(image, year, note)
-            st.session_state.analysis_result = res
-            st.rerun()
-
-    elif action == "CHAT":
-        user_msg = component_value.get("message", "")
-        if user_msg:
-            ai_reply = process_gemini_chat(user_msg)
-            st.session_state.chat_history.append((user_msg, ai_reply))
-            st.rerun()
+    component_value = components.html(html_code, height=1200, scrolling=True)
+else:
+    st.error("Không tìm thấy tệp index.html!")
