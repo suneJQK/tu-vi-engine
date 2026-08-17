@@ -3,7 +3,6 @@ import base64
 import json
 import os
 from pathlib import Path
-import time
 
 from google import genai
 from google.genai import types
@@ -17,17 +16,14 @@ st.set_page_config(
     layout="wide",
 )
 
-# --- 2. CSS CỐ ĐỊNH GIAO DIỆN & TẠO KHUNG CUỘN RIÊNG ---
+# Custom CSS giao diện Tối & Khung cuộn độc lập
 st.markdown(
     """
     <style>
-    /* Nền chung Dark Mode */
     .stApp {
         background-color: #0e1117;
         color: #ffffff;
     }
-
-    /* Tiêu đề ứng dụng */
     .main-header {
         text-align: center;
         color: #f6d365;
@@ -35,20 +31,16 @@ st.markdown(
         font-weight: bold;
         padding: 10px 0;
     }
-
-    /* Khung chứa kết quả luận giải có thanh cuộn riêng */
     .scrollable-result-box {
         background-color: #161922;
         border: 1px solid #2d3748;
         border-radius: 10px;
         padding: 20px;
-        height: 65vh; /* Cố định chiều cao theo màn hình */
-        overflow-y: auto; /* Tự động tạo thanh cuộn riêng */
+        height: 65vh;
+        overflow-y: auto;
         line-height: 1.6;
         color: #e2e8f0;
     }
-
-    /* Tùy chỉnh thanh cuộn đẹp mắt */
     .scrollable-result-box::-webkit-scrollbar {
         width: 8px;
     }
@@ -63,25 +55,18 @@ st.markdown(
     .scrollable-result-box::-webkit-scrollbar-thumb:hover {
         background: #f6d365;
     }
-
-    /* Khung Chat cuộn riêng */
-    .scrollable-chat-box {
-        height: 60vh;
-        overflow-y: auto;
-        padding-right: 10px;
-    }
     </style>
 """,
     unsafe_allow_html=True,
 )
 
-# --- 3. CẤU HÌNH VÀ HÀM XỬ LÝ API ---
+# --- 2. CẤU HÌNH ĐƯỜNG DẪN VÀ THÔNG SỐ ---
 API_KEY = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY", ""))
 BASE_DIR = Path(__file__).parent
 SYSTEM_PROMPT_FILE = BASE_DIR / "system_prompts" / "system_instruction.txt"
 ENGINE_FILE = BASE_DIR / "tu_vi_engine.json"
 CACHE_FILE = BASE_DIR / "books_cache.json"
-GEMINI_MODEL = "gemini-3.6-flash"
+GEMINI_MODEL = "gemini-2.5-flash"
 
 if "analysis_result" not in st.session_state:
     st.session_state.analysis_result = None
@@ -89,6 +74,8 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
 
+# --- 3. CÁC HÀM XỬ LÝ DỮ LIỆU ---
+@st.cache_data
 def load_system_instruction():
     if SYSTEM_PROMPT_FILE.exists():
         with open(SYSTEM_PROMPT_FILE, "r", encoding="utf-8") as f:
@@ -102,25 +89,47 @@ def load_system_instruction():
 def load_cached_books_safe():
     if not CACHE_FILE.exists():
         return [], "0 KB"
+
     try:
+        file_size_bytes = CACHE_FILE.stat().st_size
+        size_str = (
+            f"{file_size_bytes / 1024:.1f} KB"
+            if file_size_bytes >= 1024
+            else f"{file_size_bytes} Bytes"
+        )
+
         with open(CACHE_FILE, "r", encoding="utf-8") as f:
-            content = f.read().strip()
-            if not content:
-                return [], "0 KB"
-            data = json.loads(content)
-            titles = []
-            if isinstance(data, list):
-                for idx, item in enumerate(data):
-                    if isinstance(item, dict) and "title" in item:
-                        titles.append(f"{idx+1}. {item['title']}")
-                    elif isinstance(item, str):
-                        titles.append(f"{idx+1}. {item[:50]}...")
-            return titles, f"{len(content)/1024:.1f} KB"
-    except Exception:
+            data = json.load(f)
+
+        titles = []
+        if isinstance(data, list):
+            for idx, item in enumerate(data):
+                if isinstance(item, dict):
+                    title_val = (
+                        item.get("title")
+                        or item.get("name")
+                        or list(item.values())[0]
+                    )
+                    titles.append(f"{idx+1}. {str(title_val)[:60]}")
+                elif isinstance(item, str):
+                    clean_str = item.strip().replace("\n", " ")
+                    titles.append(f"{idx+1}. {clean_str[:60]}...")
+        elif isinstance(data, dict):
+            for idx, (k, v) in enumerate(data.items()):
+                titles.append(f"{idx+1}. {k}")
+
+        return titles, size_str
+
+    except Exception as e:
+        if CACHE_FILE.exists():
+            file_size_bytes = CACHE_FILE.stat().st_size
+            return [
+                f"⚠️ File JSON lỗi cú pháp: {str(e)}"
+            ], f"{file_size_bytes / 1024:.1f} KB"
         return [], "0 KB"
 
 
-# --- 4. HIỂN THỊ TIÊU ĐỀ & TABS ---
+# --- 4. GIAO DIỆN CHÍNH ---
 st.markdown(
     '<div class="main-header">☯️ TỬ VI ĐẨU SỐ ENGINE</div>',
     unsafe_allow_html=True,
@@ -134,7 +143,6 @@ tab1, tab2, tab3 = st.tabs(
 with tab1:
     col1, col2 = st.columns([1, 1.3])
 
-    # Khung trái: Cố định thông số đầu vào
     with col1:
         st.subheader("📸 Cấu Hình Luận Giải")
         uploaded_file = st.file_uploader(
@@ -154,9 +162,9 @@ with tab1:
             "🔮 BẮT ĐẦU LUẬN GIẢI", use_container_width=True, type="primary"
         )
 
-    # Khung phải: Nơi hiển thị kết quả cuộn độc lập
     with col2:
         st.subheader("📜 Kết Quả Luận Giải")
+        result_placeholder = st.empty()
 
         if btn_analyze:
             if not uploaded_file:
@@ -164,70 +172,60 @@ with tab1:
             elif not API_KEY:
                 st.error("❌ Lỗi: Chưa cấu hình GEMINI_API_KEY!")
             else:
-                progress_bar = st.progress(0, text="0% - Đang khởi tạo...")
+                with st.status(
+                    "🔮 AI đang đọc lá số & phân tích...", expanded=True
+                ) as status:
+                    try:
+                        image = Image.open(uploaded_file).convert("RGB")
+                        system_instruction = load_system_instruction()
 
-                try:
-                    time.sleep(0.2)
-                    progress_bar.progress(
-                        20, text="20% - 📸 Đang đọc & nhận diện hình ảnh..."
-                    )
-                    image = Image.open(uploaded_file).convert("RGB")
-
-                    time.sleep(0.2)
-                    progress_bar.progress(
-                        45, text="45% - ☯️ Đối chiếu Tinh Đẩu & Cách Cục..."
-                    )
-                    system_instruction = load_system_instruction()
-
-                    time.sleep(0.2)
-                    progress_bar.progress(
-                        70, text="70% - 🔮 Truy vấn Phú & Sách Tử Vi..."
-                    )
-                    prompt_text = (
-                        f"YÊU CẦU LUẬN GIẢI LÁ SỐ TỬ VI:\n"
-                        f"- Năm Tiểu Hạn cần xem: {year_input}\n"
-                        f"- Yêu cầu bổ sung từ gia chủ: {note_input}\n\n"
-                        f"Hãy tiến hành đọc ảnh lá số và luận giải chi tiết, đầy đủ theo đúng bộ quy tắc hệ thống."
-                    )
-
-                    progress_bar.progress(
-                        90, text="90% - 📝 Gemini AI đang tổng hợp bài luận..."
-                    )
-                    client = genai.Client(api_key=API_KEY)
-                    response = client.models.generate_content(
-                        model=GEMINI_MODEL,
-                        contents=[image, prompt_text],
-                        config=types.GenerateContentConfig(
-                            system_instruction=system_instruction,
-                            temperature=0.3,
-                        ),
-                    )
-
-                    progress_bar.progress(
-                        100, text="100% - Hoàn tất luận giải!"
-                    )
-                    time.sleep(0.3)
-                    progress_bar.empty()
-
-                    if response and response.text:
-                        st.session_state.analysis_result = response.text
-                    else:
-                        st.session_state.analysis_result = (
-                            "Không nhận được phản hồi từ AI."
+                        prompt_text = (
+                            f"YÊU CẦU LUẬN GIẢI LÁ SỐ TỬ VI:\n"
+                            f"- Năm Tiểu Hạn cần xem: {year_input}\n"
+                            f"- Yêu cầu bổ sung: {note_input}\n\n"
+                            f"Hãy tiến hành đọc ảnh lá số và luận giải chi tiết, đầy đủ."
                         )
 
-                except Exception as e:
-                    progress_bar.empty()
-                    st.error(f"❌ Lỗi xử lý: {str(e)}")
+                        client = genai.Client(api_key=API_KEY)
 
-        # Khung hiển thị có thanh cuộn riêng
-        if st.session_state.analysis_result:
-            st.markdown(
+                        response_stream = client.models.generate_content_stream(
+                            model=GEMINI_MODEL,
+                            contents=[image, prompt_text],
+                            config=types.GenerateContentConfig(
+                                system_instruction=system_instruction,
+                                temperature=0.3,
+                            ),
+                        )
+
+                        full_text = ""
+                        for chunk in response_stream:
+                            if chunk.text:
+                                full_text += chunk.text
+                                result_placeholder.markdown(
+                                    f'<div class="scrollable-result-box">{full_text}</div>',
+                                    unsafe_allow_html=True,
+                                )
+
+                        st.session_state.analysis_result = full_text
+                        status.update(
+                            label="✅ Luận giải hoàn tất!",
+                            state="complete",
+                            expanded=False,
+                        )
+
+                    except Exception as e:
+                        status.update(
+                            label="❌ Lỗi xử lý!", state="error", expanded=True
+                        )
+                        st.error(f"Chi tiết lỗi: {str(e)}")
+
+        if st.session_state.analysis_result and not btn_analyze:
+            result_placeholder.markdown(
                 f'<div class="scrollable-result-box">{st.session_state.analysis_result}</div>',
                 unsafe_allow_html=True,
             )
-        else:
-            st.info(
+        elif not st.session_state.analysis_result:
+            result_placeholder.info(
                 "Chưa có kết quả luận giải. Vui lòng tải lá số lên để phân tích."
             )
 
@@ -235,7 +233,6 @@ with tab1:
 with tab2:
     st.subheader("💬 Trò Chuyện Cùng AI")
 
-    # Container trò chuyện riêng
     chat_container = st.container(height=450)
     with chat_container:
         for message in st.session_state.chat_history:
@@ -278,7 +275,13 @@ with tab2:
 
 # --- TAB 3: KHO DỮ LIỆU SÁCH ---
 with tab3:
-    st.subheader("📚 Dữ Liệu Phú & Sách Trong Cache")
+    col_title, col_btn = st.columns([3, 1])
+    with col_title:
+        st.subheader("📚 Dữ Liệu Phú & Sách Trong Cache")
+    with col_btn:
+        if st.button("🔄 Cập nhật Cache"):
+            st.rerun()
+
     titles, total_size = load_cached_books_safe()
 
     st.metric(label="Dung lượng Cache", value=total_size)
