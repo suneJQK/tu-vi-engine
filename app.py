@@ -37,7 +37,6 @@ BASE_DIR = Path(__file__).parent
 SYSTEM_PROMPT_FILE = BASE_DIR / "system_prompts" / "system_instruction.txt"
 ENGINE_FILE = BASE_DIR / "tu_vi_engine.json"
 CACHE_FILE = BASE_DIR / "books_cache.json"
-INDEX_FILE = BASE_DIR / "index.html"
 GEMINI_MODEL = "gemini-2.5-flash"
 
 # Session State
@@ -125,7 +124,8 @@ def process_gemini_chat(message):
 
 
 # --- 3. CUSTOM COMPONENT SETUP ---
-tu_vi_component = components.declare_component("tu_vi_component", path=str(INDEX_FILE))
+# SỬA LỖI TẠI ĐÂY: Tham số 'path' phải trỏ đến thư mục chứa index.html (BASE_DIR)
+tu_vi_component = components.declare_component("tu_vi_component", path=str(BASE_DIR))
 
 # Lấy thông tin kho sách
 titles, total_size = load_cached_books_safe()
