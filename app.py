@@ -37,7 +37,7 @@ SYSTEM_PROMPT_FILE = BASE_DIR / "system_prompts" / "system_instruction.txt"
 ENGINE_FILE = BASE_DIR / "tu_vi_engine.json"
 CACHE_FILE = BASE_DIR / "books_cache.json"
 INDEX_FILE = BASE_DIR / "index.html"
-GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL = "gemini-3.6-flash"
 
 # Session State
 if "analysis_result" not in st.session_state:
