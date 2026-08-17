@@ -6,6 +6,8 @@
     <title>Tử Vi Đẩu Số Engine</title>
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Streamlit Component Library JS -->
+    <script src="https://unpkg.com/streamlit-component-lib@^1.4.0/dist/streamlit-component-lib.js"></script>
     <style>
         :root {
             --bg-color: #0e1117;
@@ -44,7 +46,7 @@
             gap: 10px;
         }
 
-        /* Tab Navigation */
+        /* Tabs */
         .tabs {
             display: flex;
             gap: 10px;
@@ -77,7 +79,7 @@
             display: block;
         }
 
-        /* Layout Grid cho Tab Luận Giải */
+        /* Layout Grid */
         .grid-container {
             display: grid;
             grid-template-columns: 1fr 1.2fr;
@@ -162,6 +164,7 @@
             padding: 15px;
             min-height: 300px;
             line-height: 1.6;
+            white-space: pre-wrap;
         }
 
         /* Chat UI */
@@ -262,14 +265,14 @@
                         <label>📝 Ghi chú thêm</label>
                         <textarea id="note-input" class="form-control">Phân tích kỹ Cách Cục và Vận Hạn.</textarea>
                     </div>
-                    <button type="submit" class="btn-submit">🔮 BẮT ĐẦU LUẬN GIẢI</button>
+                    <button type="submit" class="btn-submit" id="btn-analyze">🔮 BẮT ĐẦU LUẬN GIẢI</button>
                 </form>
             </div>
 
             <div class="card">
                 <h2><i class="fa-solid fa-scroll"></i> Kết Quả Luận Giải</h2>
                 <div class="result-box" id="analysis-result-content">
-                    <!-- ANALYSIS_RESULT -->
+                    <p style="color: #a0aec0;">Chưa có kết quả luận giải. Vui lòng tải lá số lên để phân tích.</p>
                 </div>
             </div>
         </div>
@@ -297,52 +300,106 @@
                 <span style="color: var(--text-muted); font-size: 0.85rem;">Dung lượng Cache</span>
                 <h3 id="cache-size-display" style="color: var(--accent-color);">0 KB</h3>
             </div>
-            <ul class="book-list" id="book-list-container">
-                <!-- Danh sách sách sẽ được render từ Backend -->
-            </ul>
+            <ul class="book-list" id="book-list-container"></ul>
         </div>
     </div>
 
     <script>
-        // Switch Tab Function
+        // 1. Khởi tạo Streamlit Component
+        const Streamlit = window.Streamlit;
+
+        function setFrameHeight() {
+            Streamlit.setFrameHeight(document.body.scrollHeight || 900);
+        }
+
+        // 2. Nhận dữ liệu truyền từ Python về HTML
+        Streamlit.events.addEventListener(Streamlit.RENDER_EVENT, (event) => {
+            const data = event.detail.args;
+
+            if (data) {
+                // Hiển thị kết quả luận giải
+                if (data.analysis_result) {
+                    document.getElementById('analysis-result-content').innerHTML = data.analysis_result;
+                }
+
+                // Render dữ liệu sách
+                if (data.books_titles) {
+                    document.getElementById('cache-size-display').innerText = data.books_size || "0 KB";
+                    const bookContainer = document.getElementById('book-list-container');
+                    bookContainer.innerHTML = "";
+                    if (data.books_titles.length > 0) {
+                        data.books_titles.forEach(title => {
+                            const li = document.createElement('li');
+                            li.innerText = title;
+                            bookContainer.appendChild(li);
+                        });
+                    } else {
+                        bookContainer.innerHTML = '<li style="color: var(--text-muted);">Chưa có dữ liệu sách hoặc tệp JSON đang trống.</li>';
+                    }
+                }
+
+                // Render lịch sử Chat
+                if (data.chat_history) {
+                    const chatContainer = document.getElementById('chat-messages');
+                    chatContainer.innerHTML = '<div class="chat-bubble bot">Xin chào! Bạn có thể đặt câu hỏi chi tiết về lá số vừa được luận giải.</div>';
+                    data.chat_history.forEach(([userMsg, aiMsg]) => {
+                        appendMessage(userMsg, 'user');
+                        appendMessage(aiMsg, 'bot');
+                    });
+                }
+            }
+
+            setFrameHeight();
+        });
+
+        // 3. Hàm gửi dữ liệu từ JS sang Python
+        function sendToStreamlit(payload) {
+            Streamlit.setComponentValue(payload);
+        }
+
+        // Switch Tab
         function switchTab(index) {
             const tabs = document.querySelectorAll('.tab-btn');
             const contents = document.querySelectorAll('.tab-content');
-            
             tabs.forEach((tab, i) => {
                 tab.classList.toggle('active', i === index);
                 contents[i].classList.toggle('active', i === index);
             });
+            setFrameHeight();
         }
 
-        // Nhận Dữ Liệu Được Inject từ Backend Streamlit (app.py)
-        const bookTitles = /* BOOK_TITLES_DATA */ [];
-        const bookSize = /* BOOK_SIZE_DATA */ "0 KB";
-        const chatHistory = /* CHAT_HISTORY_DATA */ [];
+        // Sự kiện gửi Form Luận Giải
+        document.getElementById("analysis-form").addEventListener("submit", function(e) {
+            e.preventDefault();
 
-        // Render Dữ Liệu Kho Sách
-        document.getElementById('cache-size-display').innerText = bookSize;
-        const bookContainer = document.getElementById('book-list-container');
-        if (Array.isArray(bookTitles) && bookTitles.length > 0) {
-            bookTitles.forEach(title => {
-                const li = document.createElement('li');
-                li.innerText = title;
-                bookContainer.appendChild(li);
-            });
-        } else {
-            bookContainer.innerHTML = '<li style="color: var(--text-muted);">Chưa có dữ liệu sách hoặc tệp JSON đang trống.</li>';
-        }
+            const fileInput = document.getElementById("file-input");
+            const year = document.getElementById("year-input").value;
+            const note = document.getElementById("note-input").value;
 
-        // Render Lịch Sử Chat
-        const chatContainer = document.getElementById('chat-messages');
-        if (Array.isArray(chatHistory) && chatHistory.length > 0) {
-            chatHistory.forEach(([userMsg, aiMsg]) => {
-                appendMessage(userMsg, 'user');
-                appendMessage(aiMsg, 'bot');
-            });
-        }
+            if (fileInput.files.length === 0) {
+                alert("Vui lòng chọn ảnh lá số!");
+                return;
+            }
 
+            const btn = document.getElementById("btn-analyze");
+            btn.innerText = "⚡ ĐANG XỬ LÝ AI...";
+            btn.disabled = true;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                sendToStreamlit({
+                    action: "ANALYZE",
+                    image_base64: e.target.result,
+                    year: year,
+                    note: note
+                });
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+        });
+
+        // Chat Helper
         function appendMessage(text, sender) {
+            const chatContainer = document.getElementById('chat-messages');
             const div = document.createElement('div');
             div.className = `chat-bubble ${sender}`;
             div.innerText = text;
@@ -355,11 +412,11 @@
             const text = input.value.trim();
             if (text) {
                 appendMessage(text, 'user');
+                sendToStreamlit({
+                    action: "CHAT",
+                    message: text
+                });
                 input.value = '';
-                // Giả lập câu trả lời của AI trong giao diện tĩnh
-                setTimeout(() => {
-                    appendMessage("Yêu cầu trò chuyện đã được nhận. Hãy kết nối API để cập nhật phản hồi realtime.", 'bot');
-                }, 600);
             }
         }
     </script>
