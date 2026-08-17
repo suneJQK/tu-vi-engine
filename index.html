@@ -18,7 +18,7 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-color); padding: 20px; }
+        body { background-color: var(--bg-color); color: var(--text-color); padding: 20px; position: relative; }
         header { text-align: center; margin-bottom: 25px; }
         header h1 { color: var(--accent-color); font-size: 2rem; display: flex; align-items: center; justify-content: center; gap: 10px; }
 
@@ -31,7 +31,7 @@
         .grid-container { display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px; }
         @media (max-width: 768px) { .grid-container { grid-template-columns: 1fr; } }
 
-        .card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; }
+        .card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; position: relative; }
         .card h2 { font-size: 1.2rem; color: var(--accent-color); margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.9rem; }
@@ -43,6 +43,62 @@
         .btn-submit:hover { opacity: 0.9; }
 
         .result-box { background-color: var(--input-bg); border-radius: 8px; padding: 15px; min-height: 300px; line-height: 1.6; white-space: pre-wrap; }
+        
+        /* --- TIẾN TRÌNH % VÀ OVERLAY LOADING --- */
+        .loading-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(22, 25, 34, 0.95);
+            border-radius: 12px;
+            z-index: 10;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .spinner-icon {
+            font-size: 3rem;
+            color: var(--accent-color);
+            margin-bottom: 15px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .progress-container {
+            width: 80%;
+            background-color: var(--input-bg);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            margin: 15px 0 10px 0;
+            height: 12px;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #f6d365, #fda085);
+            transition: width 0.3s ease;
+        }
+
+        .status-text {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        /* Chat UI */
         .chat-container { display: flex; flex-direction: column; height: 500px; }
         .chat-messages { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
         .chat-bubble { max-width: 80%; padding: 10px 14px; border-radius: 10px; font-size: 0.95rem; line-height: 1.4; }
@@ -91,8 +147,20 @@
 
             <div class="card">
                 <h2><i class="fa-solid fa-scroll"></i> Kết Quả Luận Giải</h2>
+                
+                <!-- Overlay hiển thị tiến trình luận giải % -->
+                <div class="loading-overlay" id="loading-overlay">
+                    <i class="fa-solid fa-yin-yang spinner-icon"></i>
+                    <h3 style="color: var(--accent-color);">AI Đang Tiến Hành Luận Giải...</h3>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="progress-bar"></div>
+                    </div>
+                    <strong id="progress-percent" style="font-size: 1.1rem; color: #fff;">0%</strong>
+                    <p class="status-text" id="status-text">Đang nhận diện hình ảnh lá số...</p>
+                </div>
+
                 <div class="result-box" id="analysis-result-content">
-                    <!-- Dynamic Content -->
+                    <p style="color: #a0aec0;">Chưa có kết quả luận giải. Vui lòng tải lá số lên để phân tích.</p>
                 </div>
             </div>
         </div>
@@ -139,6 +207,8 @@
                 if (data) {
                     if (data.analysis_result) {
                         document.getElementById('analysis-result-content').innerHTML = data.analysis_result;
+                        // Mở khóa UI khi nhận được kết quả
+                        hideLoading();
                     }
                     if (data.books_titles) {
                         document.getElementById('cache-size-display').innerText = data.books_size || "0 KB";
@@ -176,6 +246,57 @@
             updateHeight();
         }
 
+        // --- BỘ GIẢ LẬP TIẾN TRÌNH % ĐANG LUẬN GIẢI ---
+        let progressInterval;
+
+        function startLoading() {
+            const overlay = document.getElementById('loading-overlay');
+            const progressBar = document.getElementById('progress-bar');
+            const progressPercent = document.getElementById('progress-percent');
+            const statusText = document.getElementById('status-text');
+
+            overlay.classList.add('active');
+            let currentProgress = 0;
+
+            const stages = [
+                { percent: 20, text: "📸 Đang đọc & nhận diện thông tin trên lá số..." },
+                { percent: 45, text: "☯️ Đang đối chiếu các Tinh Đẩu & Cách Cục..." },
+                { percent: 70, text: "🔮 Đang truy vấn kho dữ liệu Phú & Sách Tử Vi..." },
+                { percent: 90, text: "📝 Gemini AI đang tổng hợp bài luận giải..." }
+            ];
+
+            progressInterval = setInterval(() => {
+                if (currentProgress < 95) {
+                    currentProgress += 1;
+                    progressBar.style.width = currentProgress + '%';
+                    progressPercent.innerText = currentProgress + '%';
+
+                    // Cập nhật trạng thái text theo %
+                    for (let stage of stages) {
+                        if (currentProgress === stage.percent) {
+                            statusText.innerText = stage.text;
+                        }
+                    }
+                }
+            }, 120); // Tăng % sau mỗi 120ms
+        }
+
+        function hideLoading() {
+            clearInterval(progressInterval);
+            const overlay = document.getElementById('loading-overlay');
+            const progressBar = document.getElementById('progress-bar');
+            const progressPercent = document.getElementById('progress-percent');
+
+            progressBar.style.width = '100%';
+            progressPercent.innerText = '100%';
+
+            setTimeout(() => {
+                overlay.classList.remove('active');
+                document.getElementById('btn-analyze').innerText = "🔮 BẮT ĐẦU LUẬN GIẢI";
+                document.getElementById('btn-analyze').disabled = false;
+            }, 300);
+        }
+
         document.getElementById("analysis-form").addEventListener("submit", function(e) {
             e.preventDefault();
             const fileInput = document.getElementById("file-input");
@@ -190,6 +311,9 @@
             const btn = document.getElementById("btn-analyze");
             btn.innerText = "⚡ ĐANG XỬ LÝ AI...";
             btn.disabled = true;
+
+            // Kích hoạt giao diện hiển thị %
+            startLoading();
 
             const reader = new FileReader();
             reader.onload = function(e) {
