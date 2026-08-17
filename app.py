@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import base64
+import io
 import json
 import os
 from pathlib import Path
@@ -8,8 +9,9 @@ from google import genai
 from google.genai import types
 from PIL import Image
 import streamlit as st
+import streamlit.components.v1 as components
 
-# Cấu hình giao diện Streamlit
+# --- 1. CẤU HÌNH TRANG STREAMLIT (BACKEND MODE) ---
 st.set_page_config(
     page_title="Tử Vi Đẩu Số Engine",
     page_icon="☯️",
@@ -17,54 +19,58 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# Secrets & Configs
+# Ẩn hoàn toàn giao diện mặc định của Streamlit
+st.markdown(
+    """
+    <style>
+    header, footer, #MainMenu, [data-testid="stSidebar"] { display: none !important; }
+    .block-container { padding: 0rem !important; margin: 0rem !important; max-width: 100% !important; }
+    iframe { display: block; width: 100vw !important; height: 100vh !important; border: none; }
+    </style>
+""",
+    unsafe_allow_html=True,
+)
+
+# --- 2. CẤU HÌNH HỆ THỐNG & ĐƯỜNG DẪN ---
 API_KEY = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY", ""))
 BASE_DIR = Path(__file__).parent
+
+# Đường dẫn đến tệp system instruction theo đúng cấu trúc trong ảnh: system_prompts/system_instruction.txt
+SYSTEM_PROMPT_FILE = BASE_DIR / "system_prompts" / "system_instruction.txt"
 ENGINE_FILE = BASE_DIR / "tu_vi_engine.json"
 CACHE_FILE = BASE_DIR / "books_cache.json"
 INDEX_FILE = BASE_DIR / "index.html"
 GEMINI_MODEL = "gemini-2.5-flash"
 
-# Session State
+# Session State quản lý dữ liệu ứng dụng
 if "analysis_result" not in st.session_state:
-    st.session_state.analysis_result = ""
+    st.session_state.analysis_result = (
+        "<p style='color: #a0aec0;'>Chưa có kết quả luận giải. Vui lòng tải lá số lên để phân tích.</p>"
+    )
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
 
-# Xử lý gọi Gemini API
-def process_gemini(uploaded_file, year, note):
-    if not API_KEY:
-        return "❌ Lỗi: Chưa cấu hình GEMINI_API_KEY trong Secrets!"
-    try:
-        image = Image.open(uploaded_file).convert("RGB")
-        engine_rules = ""
-        if ENGINE_FILE.exists():
-            with open(ENGINE_FILE, "r", encoding="utf-8") as f:
-                engine_rules = f.read()[:30000]
-
-        client = genai.Client(api_key=API_KEY)
-        response = client.models.generate_content(
-            model=GEMINI_MODEL,
-            contents=[
-                image,
-                f"Năm luận giải: {year}. Yêu cầu bổ sung: {note}",
-            ],
-            config=types.GenerateContentConfig(
-                system_instruction=f"BỘ QUY TẮC NGUYÊN TẮC LUẬN GIẢI:\n{engine_rules}",
-            ),
-        )
+# --- 3. ĐỌC SYSTEM PROMPT / NGUYÊN TẮC LUẬN GIẢI ---
+def load_system_instruction():
+    """Đọc system prompt từ system_prompts/system_instruction.txt"""
+    if SYSTEM_PROMPT_FILE.exists():
+        with open(SYSTEM_PROMPT_FILE, "r", encoding="utf-8") as f:
+            return f.read().strip()
+    elif ENGINE_FILE.exists():
+        with open(ENGINE_FILE, "r", encoding="utf-8") as f:
+            return f.read().strip()[:30000]
+    else:
         return (
-            response.text
-            if response and response.text
-            else "Không nhận được phản hồi từ AI."
+            "Bạn là bậc thầy Tử Vi Đẩu Số. Hãy luận giải chi tiết, đầy đủ "
+            "về Bản Mệnh, Cách Cục, 12 Cung và Vận Hạn dựa trên ảnh lá số được cung cấp."
         )
-    except Exception as e:
-        return f"❌ Lỗi xử lý API: {str(e)}"
 
 
-# Đọc cache sách an toàn (Chống lỗi JSONDecodeError)
-def load_books_safe():
+# --- 4. BACKEND LOGIC & DỊCH VỤ DỮ LIỆU ---
+
+def load_cached_books_safe():
+    """Đọc dữ liệu kho sách từ tệp cache JSON"""
     if not CACHE_FILE.exists():
         return [], "0 KB"
     try:
@@ -73,96 +79,75 @@ def load_books_safe():
             if not content:
                 return [], "0 KB"
             data = json.loads(content)
-            titles = [
-                item.get("title", f"Mục {i+1}")
-                for i, item in enumerate(data)
-                if isinstance(item, dict)
-            ]
+            titles = []
+            if isinstance(data, list):
+                for idx, item in enumerate(data):
+                    if isinstance(item, dict) and "title" in item:
+                        titles.append(f"{idx+1}. {item['title']}")
+                    elif isinstance(item, str):
+                        titles.append(f"{idx+1}. {item[:50]}...")
             return titles, f"{len(content)/1024:.1f} KB"
     except Exception:
         return [], "0 KB"
 
 
-# CSS Custom
-st.markdown(
-    """
-    <style>
-    header, footer, #MainMenu { visibility: hidden; }
-    .stApp { background-color: #0e1117; }
-    </style>
-""",
-    unsafe_allow_html=True,
-)
+def process_gemini_analysis(uploaded_file, year, note):
+    """Xử lý gọi Gemini API luận giải lá số đầy đủ theo system instruction"""
+    if not API_KEY:
+        return "<p style='color: #fc8181;'>❌ Lỗi: Chưa cấu hình GEMINI_API_KEY trong Secrets!</p>"
+    try:
+        image = Image.open(uploaded_file).convert("RGB")
+        system_instruction = load_system_instruction()
 
-st.title("☯️ Tử Vi Đẩu Số Engine")
-
-# Giao diện Tabs native Streamlit
-tab1, tab2, tab3 = st.tabs([
-    "⚙️ Luận Giải Lá Số",
-    "💬 Trò Chuyện AI",
-    "📚 Kho Dữ Liệu Sách",
-])
-
-with tab1:
-    col1, col2 = st.columns([1, 1.2])
-
-    with col1:
-        st.subheader("⚙️ Cấu Hình Luận Giải")
-        uploaded_file = st.file_uploader(
-            "📸 Tải ảnh lá số Tử Vi", type=["jpg", "png", "jpeg", "webp"]
+        prompt_text = (
+            f"YÊU CẦU LUẬN GIẢI LÁ SỐ TỬ VI:\n"
+            f"- Năm Tiểu Hạn cần xem: {year}\n"
+            f"- Yêu cầu bổ sung từ gia chủ: {note}\n\n"
+            f"Hãy tiến hành đọc ảnh lá số và luận giải chi tiết, đầy đủ theo đúng bộ quy tắc hệ thống."
         )
-        selected_year = st.number_input("📅 Năm Tiểu Hạn", 1950, 2050, 2026)
-        user_note = st.text_area(
-            "📝 Ghi chú thêm", "Phân tích kỹ Cách Cục và Vận Hạn."
+
+        client = genai.Client(api_key=API_KEY)
+        response = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=[
+                image,
+                prompt_text,
+            ],
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                temperature=0.3,
+            ),
         )
-        btn_submit = st.button("🔮 BẮT ĐẦU LUẬN GIẢI", type="primary")
+        return response.text if response and response.text else "Không nhận được phản hồi từ AI."
+    except Exception as e:
+        return f"<p style='color: #fc8181;'>❌ Lỗi xử lý API: {str(e)}</p>"
 
-    with col2:
-        st.subheader("📜 Kết Quả Luận Giải")
-        if btn_submit:
-            if uploaded_file is not None:
-                with st.spinner("⚡ AI đang phân tích lá số..."):
-                    res = process_gemini(uploaded_file, selected_year, user_note)
-                    st.session_state.analysis_result = res
-            else:
-                st.warning("Vui lòng tải lên file ảnh lá số trước!")
 
-        if st.session_state.analysis_result:
-            st.markdown(st.session_state.analysis_result)
-        else:
-            st.info("Chưa có kết quả luận giải. Nhấn nút phía bên trái để bắt đầu.")
+# --- 5. RENDER VÀ TRUYỀN DỮ LIỆU VÀO INDEX.HTML ---
 
-with tab2:
-    st.subheader("💬 Trò Chuyện Cùng AI")
-    for user_msg, ai_msg in st.session_state.chat_history:
-        with st.chat_message("user"):
-            st.write(user_msg)
-        with st.chat_message("assistant"):
-            st.write(ai_msg)
+if INDEX_FILE.exists():
+    titles, total_size = load_cached_books_safe()
 
-    chat_input = st.chat_input("Nhập câu hỏi về lá số...")
-    if chat_input:
-        if st.session_state.analysis_result:
-            try:
-                client = genai.Client(api_key=API_KEY)
-                chat_prompt = f"BÀI LUẬN GỐC:\n{st.session_state.analysis_result}\n\nCÂU HỎI MỚI: {chat_input}"
-                res = client.models.generate_content(
-                    model=GEMINI_MODEL, contents=[chat_prompt]
-                )
-                st.session_state.chat_history.append((chat_input, res.text))
-                st.rerun()
-            except Exception as e:
-                st.error(f"Lỗi: {e}")
-        else:
-            st.warning("Bạn cần thực hiện luận giải lá số ở Tab 1 trước!")
+    with open(INDEX_FILE, "r", encoding="utf-8") as f:
+        html_content = f.read()
 
-with tab3:
-    st.subheader("📚 Dữ Liệu Phú & Sách Trong Cache")
-    titles, total_size = load_books_safe()
-    st.metric("Dung lượng Cache", total_size)
+    safe_analysis = str(st.session_state.analysis_result)
+    safe_chat_history = json.dumps(st.session_state.chat_history, ensure_ascii=False)
 
-    if titles:
-        for t in titles:
-            st.markdown(f"- **{t}**")
-    else:
-        st.info("Chưa có dữ liệu sách hoặc tệp JSON đang trống.")
+    final_html = (
+        html_content.replace(
+            "/* BOOK_TITLES_DATA */", json.dumps(titles, ensure_ascii=False)
+        )
+        .replace(
+            "/* BOOK_SIZE_DATA */", json.dumps(total_size, ensure_ascii=False)
+        )
+        .replace(
+            "/* CHAT_HISTORY_DATA */", safe_chat_history
+        )
+        .replace("<!-- ANALYSIS_RESULT -->", safe_analysis)
+    )
+
+    components.html(final_html, height=1000, scrolling=True)
+
+else:
+    st.error("❌ Không tìm thấy file index.html trong cùng thư mục!")
