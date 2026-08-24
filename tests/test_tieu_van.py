@@ -57,8 +57,9 @@ def test_dan_ngo_tuat_male_and_female():
     assert male["cung_khoi_ten"] == "Thìn"
     assert male["cung_dia_chi_ten"] == "Mão"
     assert male["huong"] == "thuận"
+    # Từ mốc Tý lùi 11 bước: Thìn -> Tuất.
     assert female["cung_khoi_ten"] == "Thìn"
-    assert female["cung_dia_chi_ten"] == "Tỵ"
+    assert female["cung_dia_chi_ten"] == "Tuất"
     assert female["huong"] == "nghịch"
 
 
@@ -70,7 +71,7 @@ def test_hoi_mao_mui_male_and_female():
     assert male["cung_dia_chi_ten"] == "Hợi"
     assert male["huong"] == "thuận"
     assert female["cung_khoi_ten"] == "Sửu"
-    assert female["cung_dia_chi_ten"] == "Mão"
+    assert female["cung_dia_chi_ten"] == "Tỵ"
     assert female["huong"] == "nghịch"
 
 
