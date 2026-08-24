@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/suneJQK/luangiaibysun-clean/schema/tuvi-chart-v2.json",
+  "title": "Tu Vi Chart V2",
+  "type": "object",
+  "required": ["meta", "input", "thien_ban", "12_cung"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["schema_version", "engine", "source"],
+      "properties": {
+        "schema_version": {"const": "2.0"},
+        "engine": {"type": "string"},
+        "source": {"type": "string"},
+        "generated_at": {"type": "string"}
+      },
+      "additionalProperties": true
+    },
+    "input": {
+      "type": "object",
+      "required": ["ngay", "thang", "nam", "gio_sinh", "gioi_tinh", "duong_lich", "time_zone"],
+      "properties": {
+        "ngay": {"type": "integer", "minimum": 1, "maximum": 31},
+        "thang": {"type": "integer", "minimum": 1, "maximum": 12},
+        "nam": {"type": "integer", "minimum": 1800, "maximum": 2200},
+        "gio_sinh": {"type": "integer", "minimum": 1, "maximum": 12},
+        "gioi_tinh": {"enum": ["Nam", "Nữ"]},
+        "duong_lich": {"type": "boolean"},
+        "time_zone": {"type": "number", "minimum": -12, "maximum": 14}
+      },
+      "additionalProperties": true
+    },
+    "thien_ban": {"type": "object"},
+    "12_cung": {
+      "type": "object",
+      "minProperties": 12,
+      "additionalProperties": {"$ref": "#/$defs/palace"}
+    },
+    "cach_cuc": {"type": "array"},
+    "luan_giai": {"type": "object"}
+  },
+  "$defs": {
+    "star": {
+      "type": "object",
+      "required": ["id", "ten"],
+      "properties": {
+        "id": {"type": ["integer", "null"]},
+        "ten": {"type": "string"},
+        "ngu_hanh": {},
+        "loai": {},
+        "phuong_vi": {},
+        "am_duong": {},
+        "dac_tinh": {},
+        "vong_trang_sinh": {"type": "boolean"}
+      },
+      "additionalProperties": true
+    },
+    "palace": {
+      "type": "object",
+      "required": ["cung", "can_chi", "dia_chi", "chinh_tinh", "phu_tinh"],
+      "properties": {
+        "cung": {"type": "string"},
+        "can_chi": {"type": "string"},
+        "dia_chi": {"type": "string"},
+        "ngu_hanh": {"type": "string"},
+        "am_duong": {"type": "string"},
+        "than_cu": {"type": "boolean"},
+        "tuan": {"type": "boolean"},
+        "triet": {"type": "boolean"},
+        "dai_van": {"type": "object"},
+        "tieu_van": {"type": "object"},
+        "chinh_tinh": {"type": "array", "items": {"$ref": "#/$defs/star"}},
+        "phu_tinh": {"type": "array", "items": {"$ref": "#/$defs/star"}},
+        "vong_trang_sinh": {"type": ["string", "null"]},
+        "sao": {"type": "array", "items": {"$ref": "#/$defs/star"}}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}
