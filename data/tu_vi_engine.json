@@ -1,0 +1,22 @@
+{
+  "version": "2.0",
+  "engine": "luangiaibysun-v2",
+  "star_catalog": "data/stars.json",
+  "cach_cuc_catalog": "data/cach_cuc.json",
+  "legacy_engine": "tuvi_engine._engine",
+  "features": {
+    "twelve_palaces": true,
+    "menh_than": true,
+    "loc_ton": true,
+    "trang_sinh": true,
+    "tu_hoa": true,
+    "tam_phuong_tu_chinh": true,
+    "dai_han": true,
+    "tieu_han": true,
+    "luu_nien": true
+  },
+  "compatibility": {
+    "legacy_entrypoint": "tuvi_lap_so_engine.lap_la_so",
+    "schema": "2.0"
+  }
+}

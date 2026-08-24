@@ -1,0 +1,103 @@
+# QUY TẮC TRỌNG SỐ LUẬN HẠN NĂM — BẮT BUỘC
+
+## 1. Trọng số chuẩn cho câu hỏi tổng hợp về 1 năm
+
+Khi người dùng hỏi tổng thể "năm X thế nào", "vận hạn năm X", hoặc câu hỏi tương đương, dùng trọng số suy luận chuẩn:
+
+- Đại Vận: 55%
+- Lưu Niên Đại Vận: 18%
+- Tiểu Hạn / Tiểu Vận: 15%
+- Lưu Thái Tuế / Lưu Niên năm: 12%
+
+Đây là trọng số suy luận để xác định mức ưu tiên evidence, không phải xác suất thống kê và không phải phép cộng cơ học quyết định số phận.
+
+Công thức nền:
+Kết quả nền năm = Đại Vận×0.55 + Lưu Niên Đại Vận×0.18 + Tiểu Hạn×0.15 + Lưu Thái Tuế×0.12.
+
+## 2. Ý nghĩa 4 tầng
+
+- Đại Vận: nền tảng vĩ mô, giới hạn/trần Cát-Hung của năm.
+- Lưu Niên Đại Vận: định hướng trọng tâm, cho biết năng lượng Đại Vận năm đó đổ dồn về cung nào.
+- Tiểu Hạn: sự việc cá nhân và biểu hiện trực tiếp; ưu tiên sức khỏe, tâm lý, sinh hoạt và sự kiện cá nhân tùy cung thực tế.
+- Lưu Thái Tuế / Lưu Niên năm: ngoại cảnh và ngòi nổ kích hoạt.
+
+Khẩu quyết bắt buộc:
+"Đại Vận định Cát Hung – Lưu Niên Đại Vận định Trọng Tâm – Tiểu Hạn định Sự Việc – Lưu Thái Tuế định Ngòi Nổ."
+
+## 3. Điều chỉnh theo loại câu hỏi
+
+AI phải tự phân loại câu hỏi trước khi luận:
+
+### A. Hỏi Đại Vận / Đại Hạn 10 năm
+Trọng tâm:
+- Đại Vận: 80%
+- Các quan hệ cung, chính tinh/phụ tinh, Tam Hợp/Xung/Nhị/Giáp/Tuần-Triệt: 20%
+
+Không dùng trọng số luận hạn năm làm trung tâm.
+
+### B. Hỏi Lưu Niên Đại Vận
+Trọng tâm:
+- Đại Vận: 25%
+- Lưu Niên Đại Vận: 50%
+- Tiểu Hạn: 10%
+- Lưu Thái Tuế: 15%
+
+Mục tiêu: xác định trọng tâm của năm bên trong nền Đại Vận.
+
+### C. Hỏi Tiểu Hạn / Tiểu Vận của một năm
+Trọng tâm:
+- Đại Vận: 20%
+- Lưu Niên Đại Vận: 20%
+- Tiểu Hạn: 40%
+- Lưu Thái Tuế / Lưu Niên năm: 20%
+
+Phải tập trung sâu vào cung Tiểu Hạn đúng năm được hỏi và cung Lưu Niên năm/Lưu Thái Tuế của đúng năm đó; sau đó quét đầy đủ Đồng cung, Tam Hợp đủ 3 cung, Xung Chiếu, Nhị Hợp, Giáp Cung, Tuần/Triệt và toàn bộ sao thực tế liên quan.
+
+### D. Hỏi Lưu Niên năm / Lưu Thái Tuế
+Trọng tâm:
+- Đại Vận: 20%
+- Lưu Niên Đại Vận: 15%
+- Tiểu Hạn: 20%
+- Lưu Thái Tuế / Lưu Niên năm: 45%
+
+Phải ưu tiên Chi năm, cung Lưu Thái Tuế và các sao lưu thực tế của năm.
+
+### E. Hỏi tổng hợp vận hạn năm
+Dùng bộ trọng số chuẩn 55/18/15/12 và bắt buộc đủ 4 lớp.
+
+## 4. Không cộng điểm cơ học
+
+Không được biến trọng số thành phép cộng điểm để kết luận cứng.
+Trọng số chỉ quyết định mức ưu tiên evidence. Kết luận cuối phải dựa trên tổ hợp sao + quan hệ cung + Ngũ hành + yếu tố xác nhận/phá.
+
+## 5. Quy tắc Chồng Hình / hội tụ
+
+Sau khi áp dụng trọng số, phải kiểm tra hội tụ:
+
+- Hai tầng cùng chỉ về một sự kiện: tăng độ tin cậy.
+- Ba tầng cùng chỉ về một sự kiện: sự kiện mạnh.
+- Bốn tầng cùng xác nhận và đồng thời có sao lưu/gốc trùng phùng: sự kiện trọng điểm.
+
+Các dấu hiệu cần kiểm tra:
+- Trùng cung.
+- Tam Hợp.
+- Xung Chiếu.
+- Nhị Hợp.
+- Giáp Cung.
+- Sao lưu gặp sao gốc cùng loại.
+- Tứ Hóa lưu niên gặp sao gốc/tầng hạn.
+
+Không được tự động biến một sao đơn lẻ thành đại sự chỉ vì có Chồng Hình. Chồng Hình chỉ tăng cường sự kiện đã có nhiều evidence độc lập.
+
+## 6. Cách trình bày khi luận năm
+
+Trước khi kết luận phải cho biết:
+1. 4 tọa độ hạn.
+2. Trọng số đang áp dụng và lý do theo loại câu hỏi.
+3. Cung trọng tâm của từng tầng.
+4. Các quan hệ cung ảnh hưởng.
+5. Các sao xác nhận/phá/kích hoạt.
+6. Sự kiện cụ thể và lĩnh vực.
+7. Mức độ mạnh/yếu của bằng chứng.
+
+Không được nói "55% chắc chắn xảy ra" hoặc dùng trọng số như xác suất.

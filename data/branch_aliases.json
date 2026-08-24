@@ -1,0 +1,17 @@
+{
+  "order": ["hoi", "ty", "suu", "dan", "mao", "thin", "ti", "ngo", "mui", "than", "dau", "tuat"],
+  "branches": {
+    "ty": {"label": "Tý", "aliases": ["ty", "ty1", "tý"]},
+    "suu": {"label": "Sửu", "aliases": ["suu", "sửu"]},
+    "dan": {"label": "Dần", "aliases": ["dan", "dần"]},
+    "mao": {"label": "Mão", "aliases": ["mao", "mão"]},
+    "thin": {"label": "Thìn", "aliases": ["thin", "thìn"]},
+    "ti": {"label": "Tỵ", "aliases": ["ti", "ty2", "tỵ", "tị"]},
+    "ngo": {"label": "Ngọ", "aliases": ["ngo", "ngọ"]},
+    "mui": {"label": "Mùi", "aliases": ["mui", "mùi"]},
+    "than": {"label": "Thân", "aliases": ["than", "thân"]},
+    "dau": {"label": "Dậu", "aliases": ["dau", "dậu"]},
+    "tuat": {"label": "Tuất", "aliases": ["tuat", "tuất"]},
+    "hoi": {"label": "Hợi", "aliases": ["hoi", "hợi"]}
+  }
+}

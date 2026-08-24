@@ -1,0 +1,47 @@
+{
+  "2": {
+    "any_of": [
+      {"cung_menh": {"stars_all": ["Văn Xương", "Văn Khúc"]}},
+      {"cung_menh": {"branches_in": ["Sửu", "Mùi"]}, "tam_phuong_tu_chinh": {"stars_required": ["Văn Xương", "Văn Khúc"], "min_count": 2}}
+    ]
+  },
+  "7": {"cung_menh": {"stars_all": ["Tử Vi", "Thiên Phủ"], "branches_in": ["Dần", "Thân"]}},
+  "10": {"cung_menh": {"stars_all": ["Tử Vi"]}, "tam_phuong_tu_chinh_aux": {"stars_required": ["Tả Phù", "Hữu Bật", "Thiên Khôi", "Thiên Việt", "Văn Xương", "Văn Khúc", "Lộc Tồn"], "min_count": 2}},
+  "11": {"tam_phuong_tu_chinh": {"stars_required": ["Thiên Cơ", "Thái Âm", "Thiên Đồng", "Thiên Lương"], "min_count": 4}},
+  "14": {"cung_menh": {"stars_all": ["Cự Môn", "Thái Dương"], "branches_in": ["Dần", "Thân"]}},
+  "17": {"cung_menh": {"branches_in": ["Mão"]}, "tam_phuong_tu_chinh": {"stars_required": ["Thái Dương", "Thiên Lương", "Văn Xương"], "min_count": 3}, "tam_phuong_tu_chinh_loc": {"stars_required": ["Lộc Tồn"], "min_count": 1}, "stem_contains": "Ất"},
+  "21": {"any_of": [
+    {"cung_menh": {"branches_in": ["Tý"], "stars_all": ["Thái Âm", "Thiên Đồng"]}},
+    {"cung_dien": {"branches_in": ["Tý"], "stars_all": ["Thái Âm", "Thiên Đồng"]}}
+  ]},
+  "24": {"any_of": [
+    {"cung_menh": {"stars_all": ["Cự Môn"], "branches_in": ["Tý", "Ngọ"]}, "stem_contains": "Tân"},
+    {"cung_menh": {"stars_all": ["Cự Môn"], "branches_in": ["Tý", "Ngọ"]}, "stem_contains": "Quý"}
+  ]},
+  "25": {"cung_menh": {"stars_all": ["Thất Sát"], "branches_in": ["Tý", "Ngọ", "Dần", "Thân"]}, "tam_phuong_tu_chinh_aux": {"stars_required": ["Lộc Tồn", "Hóa Lộc", "Hóa Quyền", "Hóa Khoa", "Tả Phù", "Hữu Bật", "Văn Xương", "Văn Khúc", "Thiên Khôi", "Thiên Việt"], "min_count": 1}},
+  "26": {"any_of": [
+    {"cung_menh": {"branches_in": ["Ngọ"], "stars_all": ["Kình Dương", "Thiên Đồng", "Thái Âm"]}, "stem_contains": "Bính"},
+    {"cung_menh": {"branches_in": ["Ngọ"], "stars_all": ["Kình Dương", "Thiên Đồng", "Thái Âm"]}, "stem_contains": "Mậu"},
+    {"cung_menh": {"branches_in": ["Ngọ"], "stars_all": ["Kình Dương", "Tham Lang"]}, "stem_contains": "Bính"},
+    {"cung_menh": {"branches_in": ["Ngọ"], "stars_all": ["Kình Dương", "Tham Lang"]}, "stem_contains": "Mậu"}
+  ]},
+  "27": {"cung_menh": {"stars_all": ["Cự Môn", "Thiên Cơ"], "branches_in": ["Mão"]}},
+  "28": {"cung_menh": {"stars_any": ["Thiên Khôi", "Thiên Việt"]}, "tam_phuong_tu_chinh": {"stars_required": ["Thiên Khôi", "Thiên Việt"], "min_count": 2}},
+  "29": {"any_of": [
+    {"cung_menh": {"stars_all": ["Hóa Quyền", "Hóa Lộc"]}},
+    {"tam_phuong_tu_chinh": {"stars_required": ["Hóa Quyền", "Hóa Lộc"], "min_count": 2}}
+  ]},
+  "30": {"giap_cung_pairs": [["Hóa Khoa", "Hóa Quyền"], ["Hóa Khoa", "Hóa Lộc"], ["Hóa Quyền", "Hóa Lộc"]]},
+  "31": {"giap_cung_pairs": [["Lộc Tồn", "Hóa Lộc"]]},
+  "32": {"any_of": [
+    {"cung_menh": {"stars_all": ["Tham Lang", "Vũ Khúc"], "branches_in": ["Sửu", "Mùi"]}},
+    {"cung_menh": {"branches_in": ["Thìn", "Tuất"], "stars_any": ["Tham Lang", "Vũ Khúc"]}, "tam_phuong_tu_chinh": {"stars_required": ["Tham Lang", "Vũ Khúc"], "min_count": 2}}
+  ]},
+  "35": {"giap_cung_pairs": [["Tử Vi", "Thiên Phủ"], ["Thái Dương", "Thái Âm"], ["Tả Phù", "Hữu Bật"], ["Thiên Khôi", "Thiên Việt"]]},
+  "38": {"cung_menh": {"stars_all": ["Liêm Trinh"], "branches_in": ["Thân", "Mùi"], "stars_none": ["Kình Dương", "Đà La", "Hỏa Tinh", "Linh Tinh"]}},
+  "39": {"cung_menh": {"stars_any": ["Kình Dương", "Đà La", "Hỏa Tinh", "Linh Tinh"]}, "tam_phuong_tu_chinh": {"stars_required": ["Thất Sát"], "min_count": 1}, "tam_phuong_loc": {"stars_required": ["Hóa Lộc", "Hóa Quyền", "Lộc Tồn"], "min_count": 1}},
+  "44": {"any_of": [
+    {"cung_menh": {"branches_in": ["Sửu"]}, "xung_chieu": {"stars_all": ["Thái Dương", "Thái Âm"]}},
+    {"cung_menh": {"branches_in": ["Mùi"]}, "xung_chieu": {"stars_all": ["Thái Dương", "Thái Âm"]}}
+  ]}
+}

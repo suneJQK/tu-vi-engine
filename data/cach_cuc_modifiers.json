@@ -1,0 +1,18 @@
+{
+  "schema_version": "2.0-cach-cuc-modifiers",
+  "description": "Các yếu tố phá cách/giảm cấp được xét sau khi Cách Cục lõi đã match. Không tự tạo Cách Cục mới.",
+  "modifiers": {
+    "loc_phung_xung_pha": {
+      "name": "Lộc Phùng Xung Phá",
+      "effect": "DEGRADE",
+      "target_stars": ["Lộc Tồn", "Hóa Lộc"],
+      "breaking_factors": {
+        "xung_chieu": ["Hóa Kỵ", "Địa Không", "Địa Kiếp", "Kình Dương", "Đà La", "Hỏa Tinh", "Linh Tinh"],
+        "tam_phuong_tu_chinh": ["Hóa Kỵ", "Địa Không", "Địa Kiếp", "Kình Dương", "Đà La", "Hỏa Tinh", "Linh Tinh"],
+        "dong_cung": ["Hóa Kỵ", "Địa Không", "Địa Kiếp", "Kình Dương", "Đà La", "Hỏa Tinh", "Linh Tinh"]
+      },
+      "interpretation": "Lộc vẫn được ghi nhận là có, nhưng tính cát bị giảm hoặc chuyển thành cát dã tàng hung khi có yếu tố phá.",
+      "ai_instruction": "Không xóa Cách Cục lõi; phải ghi đồng thời Cách Cục và modifier phá/giảm để AI luận hai tầng."
+    }
+  }
+}
