@@ -1,0 +1,46 @@
+name: repair-ci
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test-and-package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest httpx
+      - name: Compile Python sources
+        run: python -m compileall -q . -x '(^|/)(__pycache__)(/|$)'
+      - name: Run tests
+        run: pytest -q
+      - name: Smoke test FastAPI import
+        run: python - <<'PY'
+          from api.index import app
+          from fastapi.testclient import TestClient
+          c = TestClient(app)
+          r = c.get('/api/health')
+          assert r.status_code == 200, r.text
+          assert r.json().get('status') == 'ok'
+        PY
+      - name: Build clean source ZIP
+        run: |
+          mkdir -p artifact/tu-vi-engine
+          rsync -a --exclude='.git' --exclude='__pycache__' --exclude='*.pyc' --exclude='artifact' ./ artifact/tu-vi-engine/
+          cd artifact
+          zip -qr ../tu-vi-engine-repaired.zip tu-vi-engine
+      - name: Upload repaired project
+        uses: actions/upload-artifact@v4
+        with:
+          name: tu-vi-engine-repaired
+          path: tu-vi-engine-repaired.zip
