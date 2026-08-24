@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TV AI · Chọn AI</title>
+<style>
+body{margin:0;background:#080c14;color:#f4f7ff;font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:720px;margin:0 auto;padding:24px}.card{background:#111a2b;border:1px solid #30435f;border-radius:16px;padding:22px}.muted{color:#93a0b6}label{display:block;margin:16px 0 7px;color:#c8d2e4}select,button{width:100%;padding:12px 13px;border-radius:10px;font:inherit}select{background:#09111e;color:#f4f7ff;border:1px solid #3b506f}button{margin-top:14px;border:0;background:#ead084;color:#17120a;font-weight:800;cursor:pointer}.status{margin-top:12px;padding:10px;border-radius:10px;background:#09111e;border:1px solid #30435f}.mode{margin-top:16px;padding:12px;border:1px solid #30435f;border-radius:10px;background:#0b1422}.mode b{color:#f4d996}
+</style>
+</head>
+<body><main class="wrap"><div class="card"><h1>Thiết lập AI</h1><p class="muted">Chọn nhà cung cấp AI và chế độ luận giải. Lựa chọn được lưu trên trình duyệt và áp dụng cho các lần luận giải tiếp theo.</p><label for="provider">Nhà cung cấp AI</label><select id="provider"><option value="gemini">Gemini</option><option value="openai">ChatGPT / OpenAI</option></select><label for="mode">Chế độ luận giải</label><select id="mode"></select><button id="save">Lưu cấu hình</button><div id="status" class="status">Đang tải…</div><div id="desc" class="mode"></div></div></main>
+<script>
+const provider=$('provider');const mode=$('mode');const status=$('status');const desc=$('desc');function $(id){return document.getElementById(id)}
+function setCookie(name,value){document.cookie=`${name}=${encodeURIComponent(value)}; Path=/; Max-Age=31536000; SameSite=Lax`}
+function getCookie(name){const p=document.cookie.split('; ').find(x=>x.startsWith(name+'='));return p?decodeURIComponent(p.split('=').slice(1).join('=')):''}
+let modes=[];
+async function load(){try{const [mr,pr]=await Promise.all([fetch('/api/ai-modes'),fetch('/api/ai-providers')]);const md=await mr.json();const pd=await pr.json();modes=md.modes||[];mode.replaceChildren(...modes.map(x=>{const option=document.createElement('option');option.value=x.id||'';option.textContent=x.name||'';return option;}));const currentMode=getCookie('tv_ai_mode')||'standard';if(modes.some(x=>x.id===currentMode))mode.value=currentMode;const currentProvider=getCookie('tv_ai_provider')||'gemini';if((pd.providers||[]).some(x=>x.id===currentProvider))provider.value=currentProvider;render();updateStatus()}catch(e){status.textContent='Không tải được cấu hình AI'}}
+function render(){const x=modes.find(m=>m.id===mode.value);desc.replaceChildren();if(!x)return;const title=document.createElement('b');title.textContent=x.name||'';const file=document.createElement('div');file.className='muted';file.textContent=`File cấu hình: ${x.file||''}`;desc.append(title,file)}
+function updateStatus(){const p=provider.options[provider.selectedIndex]?.text||provider.value;const m=modes.find(x=>x.id===mode.value)?.name||mode.value;status.textContent=`Đang dùng: ${p} · ${m}`}
+mode.addEventListener('change',()=>{render();updateStatus()});provider.addEventListener('change',updateStatus);$('save').addEventListener('click',()=>{setCookie('tv_ai_mode',mode.value);setCookie('tv_ai_provider',provider.value);updateStatus();status.textContent='Đã lưu cấu hình AI: '+status.textContent.replace('Đang dùng: ','')});load();
+</script></body></html>

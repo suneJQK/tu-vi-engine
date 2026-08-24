@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "routes": [
+    { "src": "^/$", "dest": "/web/index.html" },
+    { "src": "^/ai-mode/?$", "dest": "/ai_mode.html" },
+    { "src": "^/(web|data)/(.*)$", "dest": "/$1/$2" },
+    { "src": "^/api/(.*)$", "dest": "/api/index.py" },
+    { "src": "^/(.*)$", "dest": "/web/index.html" }
+  ]
+}

@@ -1,0 +1,13 @@
+[project]
+name = "tv-ai"
+version = "3.0.0"
+description = "Tử Vi Đẩu Số AI powered by deterministic Python engine"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "pydantic>=2,<3",
+  "google-genai>=1,<2",
+  "google-auth>=2,<3",
+  "google-api-python-client>=2,<3",
+  "openai>=1,<2",
+]
