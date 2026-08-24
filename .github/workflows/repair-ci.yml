@@ -37,10 +37,7 @@ jobs:
         PY
       - name: Build clean source ZIP
         run: |
-          mkdir -p artifact/tu-vi-engine
-          rsync -a --exclude='.git' --exclude='__pycache__' --exclude='*.pyc' --exclude='artifact' ./ artifact/tu-vi-engine/
-          cd artifact
-          zip -qr ../tu-vi-engine-repaired.zip tu-vi-engine
+          python scripts/build_release_zip.py
       - name: Upload repaired project
         uses: actions/upload-artifact@v4
         with:
