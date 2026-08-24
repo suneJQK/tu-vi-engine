@@ -11,3 +11,6 @@ dependencies = [
   "google-api-python-client>=2,<3",
   "openai>=1,<2",
 ]
+
+[tool.vercel]
+entrypoint = "api/index.py"
